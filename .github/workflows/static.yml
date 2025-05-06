@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sống sót khỏi bảo mắt đỏ</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background-color: #000;
+            color: #fff;
+            overflow: hidden;
+        }
+        
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        #menu-screen {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-image: url('https://i.ibb.co/k2pkj12J/hinh-2.jpg');
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+        
+        .menu-button {
+            margin: 10px;
+            padding: 15px 30px;
+            font-size: 20px;
+            background-color: rgba(255, 0, 0, 0.7);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .menu-button:hover {
+            background-color: rgba(255, 0, 0, 0.9);
+            transform: scale(1.05);
+        }
+        
+        #game-screen {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: none;
+            background-color: #111;
+            z-index: 5;
+        }
+        
+        #upgrade-screen, #settings-screen, #leaderboard-screen {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: none;
+            background-color: rgba(0, 0, 0, 0.9);
+            z-index: 8;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        #monster-image {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-image: url('https://i.ibb.co/ycFhdGJm/hinh-1.jpg');
+            background-size: cover;
+            background-position: center;
+            display: none;
+            z-index: 9;
+            opacity: 0.7;
+        }
+        
+        #game-ui {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            display: flex;
+            justify-content: space-around;
+            z-index: 6;
+        }
+        
+        .ui-element {
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 5px;
+        }
+        
+        #health-bar, #stamina-bar {
+            width: 100px;
+            height: 20px;
+            background-color: #333;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        
+        #health-fill {
+            height: 100%;
+            width: 100%;
+            background-color: #f00;
+        }
+        
+        #stamina-fill {
+            height: 100%;
+            width: 100%;
+            background-color: #0f0;
+        }
+        
+        #day-counter, #time-counter, #score-counter, #money-counter {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        #game-over-screen {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: none;
+            background-color: rgba(0, 0, 0, 0.9);
+            z-index: 10;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        #game-over-text {
+            font-size: 48px;
+            color: red;
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="menu-screen">
+            <h1>SỐNG SÓT KHỎI BẢO MẮT ĐỎ</h1>
+            <button class="menu-button" id="play-button">CHƠI</button>
+            <button class="menu-button" id="upgrade-button">NÂNG CẤP</button>
+            <button class="menu-button" id="settings-button">CÀI ĐẶT</button>
+            <button class="menu-button" id="leaderboard-button">BẢNG XẾP HẠNG</button>
+        </div>
+        
+        <div id="game-screen">
+            <div id="monster-image"></div>
+            <div id="game-ui">
+                <div class="ui-element">
+                    <div>MÁU: <span id="health-text">100</span></div>
+                    <div id="health-bar"><div id="health-fill"></div></div>
+                </div>
+                <div class="ui-element">
+                    <div>THỂ LỰC: <span id="stamina-text">100</span></div>
+                    <div id="stamina-bar"><div id="stamina-fill"></div></div>
+                </div>
+                <div class="ui-element" id="day-counter">NGÀY: 1/7</div>
+                <div class="ui-element" id="time-counter">THỜI GIAN: 00:00</div>
+                <div class="ui-element" id="score-counter">ĐIỂM: 0</div>
+                <div class="ui-element" id="money-counter">TIỀN: 0</div>
+            </div>
+        </div>
+        
+        <div id="upgrade-screen">
+            <h2>NÂNG CẤP</h2>
+            <div class="upgrade-item">
+                <h3>SÚNG RỒNG XANH</h3>
+                <p>Sát thương: <span id="gun-damage">10</span></p>
+                <button class="upgrade-btn" onclick="upgradeGun()">Nâng cấp (1000 tiền)</button>
+            </div>
+            <div class="upgrade-item">
+                <h3>THUỐC NHÌN TRONG TỐI</h3>
+                <p>Thời gian: <span id="night-vision-time">0</span> giây</p>
+                <button class="upgrade-btn" onclick="upgradeNightVision()">Mua (500 tiền)</button>
+            </div>
+            <button class="menu-button" id="back-from-upgrade">TRỞ VỀ</button>
+        </div>
+        
+        <div id="settings-screen">
+            <h2>CÀI ĐẶT</h2>
+            <div class="setting-item">
+                <label for="volume-control">ÂM LƯỢNG:</label>
+                <input type="range" id="volume-control" min="0" max="1" step="0.1" value="0.5">
+            </div>
+            <div class="setting-item">
+                <label for="difficulty-select">ĐỘ KHÓ:</label>
+                <select id="difficulty-select">
+                    <option value="easy">DỄ</option>
+                    <option value="normal" selected>BÌNH THƯỜNG</option>
+                    <option value="hard">KHÓ</option>
+                    <option value="nightmare">ÁC MỘNG</option>
+                </select>
+            </div>
+            <button class="menu-button" id="back-from-settings">TRỞ VỀ</button>
+        </div>
+        
+        <div id="leaderboard-screen">
+            <h2>BẢNG XẾP HẠNG</h2>
+            <table id="leaderboard-table">
+                <tr>
+                    <th>HẠNG</th>
+                    <th>TÊN</th>
+                    <th>ĐIỂM</th>
+                    <th>NGÀY</th>
+                </tr>
+            </table>
+            <button class="menu-button" id="back-from-leaderboard">TRỞ VỀ</button>
+        </div>
+        
+        <div id="game-over-screen">
+            <div id="game-over-text">NGU THÌ CHẾT ĐI</div>
+            <button class="menu-button" id="restart-button">CHƠI LẠI</button>
+            <button class="menu-button" id="menu-button">VỀ MENU</button>
+        </div>
+    </div>
+
+    <audio id="background-sound" loop>
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-horror-ambience-2282.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="heartbeat-sound">
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-fast-heartbeat-757.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="gun-sound">
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-short-gun-shot-1670.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="monster-sound">
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-demonic-horror-laugh-365.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="catch-sound">
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-man-says-angry-monster-275.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        // Game state
+        const gameState = {
+            health: 100,
+            maxHealth: 100,
+            stamina: 100,
+            maxStamina: 100,
+            day: 1,
+            maxDays: 7,
+            time: 0,
+            score: 0,
+            money: 0,
+            gunDamage: 10,
+            nightVisionTime: 0,
+            difficulty: 'normal',
+            volume: 0.5,
+            caught: false,
+            monsterVisible: false,
+            gameActive: false
+        };
+
+        // DOM elements
+        const menuScreen = document.getElementById('menu-screen');
+        const gameScreen = document.getElementById('game-screen');
+        const upgradeScreen = document.getElementById('upgrade-screen');
+        const settingsScreen = document.getElementById('settings-screen');
+        const leaderboardScreen = document.getElementById('leaderboard-screen');
+        const gameOverScreen = document.getElementById('game-over-screen');
+        const monsterImage = document.getElementById('monster-image');
+        
+        // Audio elements
+        const backgroundSound = document.getElementById('background-sound');
+        const heartbeatSound = document.getElementById('heartbeat-sound');
+        const gunSound = document.getElementById('gun-sound');
+        const monsterSound = document.getElementById('monster-sound');
+        const catchSound = document.getElementById('catch-sound');
+
+        // Initialize game
+        function initGame() {
+            loadGame();
+            setupEventListeners();
+            updateUI();
+        }
+
+        // Load game from cookies
+        function loadGame() {
+            const savedGame = getCookie('survival_game');
+            if (savedGame) {
+                const savedState = JSON.parse(savedGame);
+                Object.assign(gameState, savedState);
+            }
+            
+            // Apply settings
+            document.getElementById('volume-control').value = gameState.volume;
+            document.getElementById('difficulty-select').value = gameState.difficulty;
+        }
+
+        // Save game to cookies
+        function saveGame() {
+            setCookie('survival_game', JSON.stringify(gameState), 30);
+        }
+
+        // Cookie helpers
+        function setCookie(name, value, days) {
+            const date = new Date();
+            date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+            const expires = "expires=" + date.toUTCString();
+            document.cookie = name + "=" + value + ";" + expires + ";path=/";
+        }
+
+        function getCookie(name) {
+            const cookieName = name + "=";
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                let cookie = cookies[i].trim();
+                if (cookie.indexOf(cookieName) === 0) {
+                    return cookie.substring(cookieName.length, cookie.length);
+                }
+            }
+            return "";
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Menu buttons
+            document.getElementById('play-button').addEventListener('click', startGame);
+            document.getElementById('upgrade-button').addEventListener('click', showUpgradeScreen);
+            document.getElementById('settings-button').addEventListener('click', showSettingsScreen);
+            document.getElementById('leaderboard-button').addEventListener('click', showLeaderboardScreen);
+            
+            // Back buttons
+            document.getElementById('back-from-upgrade').addEventListener('click', hideUpgradeScreen);
+            document.getElementById('back-from-settings').addEventListener('click', hideSettingsScreen);
+            document.getElementById('back-from-leaderboard').addEventListener('click', hideLeaderboardScreen);
+            
+            // Game over buttons
+            document.getElementById('restart-button').addEventListener('click', restartGame);
+            document.getElementById('menu-button').addEventListener('click', returnToMenu);
+            
+            // Settings controls
+            document.getElementById('volume-control').addEventListener('input', updateVolume);
+            document.getElementById('difficulty-select').addEventListener('change', updateDifficulty);
+            
+            // Game controls
+            document.addEventListener('keydown', handleKeyPress);
+            gameScreen.addEventListener('click', handleClick);
+        }
+
+        // Start game
+        function startGame() {
+            menuScreen.style.display = 'none';
+            gameScreen.style.display = 'block';
+            gameState.gameActive = true;
+            gameState.time = 0;
+            
+            // Start game loop
+            gameLoop();
+            
+            // Play background sound
+            backgroundSound.volume = gameState.volume;
+            backgroundSound.play();
+        }
+
+        // Game loop
+        function gameLoop() {
+            if (!gameState.gameActive) return;
+            
+            // Update game state
+            updateGameState();
+            
+            // Update UI
+            updateUI();
+            
+            // Check game over
+            if (gameState.day > gameState.maxDays) {
+                gameOver();
+                return;
+            }
+            
+            // Continue loop
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Update game state
+        function updateGameState() {
+            // Update time (30 seconds real time = 1 hour game time)
+            gameState.time += 1;
+            
+            // Update stamina
+            if (gameState.stamina < gameState.maxStamina) {
+                gameState.stamina += 0.1;
+                if (gameState.stamina > gameState.maxStamina) {
+                    gameState.stamina = gameState.maxStamina;
+                }
+            }
+            
+            // Monster logic based on difficulty
+            const difficultyFactors = {
+                easy: 0.001,
+                normal: 0.003,
+                hard: 0.006,
+                nightmare: 0.01
+            };
+            
+            const spawnChance = difficultyFactors[gameState.difficulty];
+            if (Math.random() < spawnChance) {
+                showMonster();
+            }
+        }
+
+        // Update UI
+        function updateUI() {
+            // Health and stamina
+            document.getElementById('health-text').textContent = Math.floor(gameState.health);
+            document.getElementById('stamina-text').textContent = Math.floor(gameState.stamina);
+            document.getElementById('health-fill').style.width = `${(gameState.health / gameState.maxHealth) * 100}%`;
+            document.getElementById('stamina-fill').style.width = `${(gameState.stamina / gameState.maxStamina) * 100}%`;
+            
+            // Day and time
+            document.getElementById('day-counter').textContent = `NGÀY: ${gameState.day}/${gameState.maxDays}`;
+            
+            const gameHours = Math.floor(gameState.time / 3600);
+            const gameMinutes = Math.floor((gameState.time % 3600) / 60);
+            document.getElementById('time-counter').textContent = `THỜI GIAN: ${String(gameHours).padStart(2, '0')}:${String(gameMinutes).padStart(2, '0')}`;
+            
+            // Score and money
+            document.getElementById('score-counter').textContent = `ĐIỂM: ${gameState.score}`;
+            document.getElementById('money-counter').textContent = `TIỀN: ${gameState.money}`;
+            
+            // Upgrade screen
+            document.getElementById('gun-damage').textContent = gameState.gunDamage;
+            document.getElementById('night-vision-time').textContent = gameState.nightVisionTime;
+        }
+
+        // Show monster
+        function showMonster() {
+            if (gameState.caught || gameState.monsterVisible) return;
+            
+            gameState.monsterVisible = true;
+            monsterImage.style.display = 'block';
+            
+            // Play heartbeat sound
+            heartbeatSound.volume = gameState.volume;
+            heartbeatSound.play();
+            
+            // Hide monster after random time
+            setTimeout(() => {
+                hideMonster();
+            }, 2000 + Math.random() * 3000);
+        }
+
+        // Hide monster
+        function hideMonster() {
+            gameState.monsterVisible = false;
+            monsterImage.style.display = 'none';
+            heartbeatSound.pause();
+        }
+
+        // Catch player
+        function catchPlayer() {
+            if (gameState.caught) return;
+            
+            gameState.caught = true;
+            gameState.day += 1;
+            
+            // Play catch sound
+            catchSound.volume = gameState.volume;
+            catchSound.play();
+            
+            // Show monster full screen
+            monsterImage.style.display = 'block';
+            monsterImage.style.opacity = '1';
+            
+            // Reset after delay
+            setTimeout(() => {
+                gameState.caught = false;
+                monsterImage.style.display = 'none';
+                monsterImage.style.opacity = '0.7';
+                gameState.health = gameState.maxHealth;
+                saveGame();
+            }, 3000);
+        }
+
+        // Handle key press
+        function handleKeyPress(e) {
+            if (!gameState.gameActive) return;
+            
+            // Movement controls
+            if (e.key === 'w' || e.key === 'W' || e.key === 'ArrowUp') {
+                // Move forward
+                if (gameState.stamina > 0) {
+                    gameState.stamina -= 0.5;
+                }
+            }
+            // Add other movement controls as needed
+        }
+
+        // Handle click (shooting)
+        function handleClick() {
+            if (!gameState.gameActive || gameState.caught) return;
+            
+            // Play gun sound
+            gunSound.volume = gameState.volume;
+            gunSound.currentTime = 0;
+            gunSound.play();
+            
+            // Check if monster is visible
+            if (gameState.monsterVisible) {
+                // Hit monster
+                gameState.score += gameState.gunDamage;
+                gameState.money += Math.floor(gameState.gunDamage / 2);
+                hideMonster();
+            }
+        }
+
+        // Upgrade functions
+        function upgradeGun() {
+            if (gameState.money >= 1000) {
+                gameState.money -= 1000;
+                gameState.gunDamage += 5;
+                saveGame();
+                updateUI();
+            }
+        }
+
+        function upgradeNightVision() {
+            if (gameState.money >= 500) {
+                gameState.money -= 500;
+                gameState.nightVisionTime += 30;
+                saveGame();
+                updateUI();
+            }
+        }
+
+        // Screen navigation
+        function showUpgradeScreen() {
+            menuScreen.style.display = 'none';
+            upgradeScreen.style.display = 'flex';
+        }
+
+        function hideUpgradeScreen() {
+            upgradeScreen.style.display = 'none';
+            menuScreen.style.display = 'flex';
+        }
+
+        function showSettingsScreen() {
+            menuScreen.style.display = 'none';
+            settingsScreen.style.display = 'flex';
+        }
+
+        function hideSettingsScreen() {
+            settingsScreen.style.display = 'none';
+            menuScreen.style.display = 'flex';
+            saveGame();
+        }
+
+        function showLeaderboardScreen() {
+            menuScreen.style.display = 'none';
+            leaderboardScreen.style.display = 'flex';
+            updateLeaderboard();
+        }
+
+        function hideLeaderboardScreen() {
+            leaderboardScreen.style.display = 'none';
+            menuScreen.style.display = 'flex';
+        }
+
+        // Update leaderboard
+        function updateLeaderboard() {
+            // In a real game, this would load from server or cookies
+            const table = document.getElementById('leaderboard-table');
+            // Clear existing rows (except header)
+            while (table.rows.length > 1) {
+                table.deleteRow(1);
+            }
+            
+            // Add sample data
+            addLeaderboardRow(table, 1, "BẠN", gameState.score, gameState.day);
+            addLeaderboardRow(table, 2, "Người chơi 1", 1500, 5);
+            addLeaderboardRow(table, 3, "Người chơi 2", 1200, 4);
+        }
+
+        function addLeaderboardRow(table, rank, name, score, day) {
+            const row = table.insertRow();
+            row.insertCell(0).textContent = rank;
+            row.insertCell(1).textContent = name;
+            row.insertCell(2).textContent = score;
+            row.insertCell(3).textContent = day;
+        }
+
+        // Update volume
+        function updateVolume() {
+            gameState.volume = parseFloat(document.getElementById('volume-control').value);
+            backgroundSound.volume = gameState.volume;
+            saveGame();
+        }
+
+        // Update difficulty
+        function updateDifficulty() {
+            gameState.difficulty = document.getElementById('difficulty-select').value;
+            saveGame();
+        }
+
+        // Game over
+        function gameOver() {
+            gameState.gameActive = false;
+            gameScreen.style.display = 'none';
+            gameOverScreen.style.display = 'flex';
+            backgroundSound.pause();
+        }
+
+        // Restart game
+        function restartGame() {
+            gameOverScreen.style.display = 'none';
+            resetGame();
+            startGame();
+        }
+
+        // Return to menu
+        function returnToMenu() {
+            gameOverScreen.style.display = 'none';
+            resetGame();
+            menuScreen.style.display = 'flex';
+        }
+
+        // Reset game state
+        function resetGame() {
+            gameState.health = gameState.maxHealth;
+            gameState.stamina = gameState.maxStamina;
+            gameState.day = 1;
+            gameState.time = 0;
+            gameState.score = 0;
+            gameState.caught = false;
+            gameState.monsterVisible = false;
+            gameState.gameActive = false;
+            
+            // Reset sounds
+            backgroundSound.pause();
+            heartbeatSound.pause();
+            monsterSound.pause();
+        }
+
+        // Initialize game when loaded
+        window.onload = initGame;
+    </script>
+</body>
+</html>
